@@ -72,7 +72,7 @@
         }
         .btn-export:hover { opacity: 0.95; transform: translateY(-1px); }
 
-        /* PAINEL CONSOLIDADO NO TOPO */
+        /* PAINEL CONSOLIDADO */
         .consolidated-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -118,7 +118,7 @@
             font-weight: 600;
         }
 
-        /* SEÇÃO INFERIOR DO PAINEL: MECÂNICA + LEGENDA */
+        /* LINHA DE MECÂNICA + LEGENDA */
         .panel-footer-row {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
@@ -128,7 +128,6 @@
             align-items: stretch;
         }
 
-        /* CARD DA MECÂNICA DOS FRETES */
         .mechanics-box {
             background: #faf5ff;
             border: 1px solid #f3e8ff;
@@ -178,7 +177,6 @@
             font-weight: 800;
         }
 
-        /* LEGENDA DO CÁLCULO */
         .legend-banner {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
@@ -262,7 +260,6 @@
             gap: 6px;
         }
 
-        /* INDICADORES DO MÊS */
         .month-kpis {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -287,7 +284,6 @@
             color: var(--text-main);
         }
 
-        /* TABELA DE DETALHAMENTO DO MÊS */
         .table-wrap {
             overflow-x: auto;
             border-radius: 12px;
@@ -331,7 +327,7 @@
             color: #991b1b;
             padding: 20px;
             border-radius: 14px;
-            line-height: 1.5;
+            line-height: 1.6;
             font-size: 0.9rem;
         }
 
@@ -389,7 +385,6 @@
 
             <!-- LINHA DE MECÂNICA + LEGENDA -->
             <div class="panel-footer-row">
-                <!-- BOX MECÂNICA DOS FRETES -->
                 <div class="mechanics-box">
                     <div class="mechanics-title">
                         <i class="fas fa-truck-fast"></i> Mecânica da Campanha de Frete
@@ -406,7 +401,6 @@
                     </div>
                 </div>
 
-                <!-- BOX LEGENDA DO CÁLCULO -->
                 <div class="legend-banner">
                     <div class="legend-banner-header">
                         <i class="fas fa-calculator"></i> Regra de Cálculo (% Investimento)
@@ -428,11 +422,8 @@
     </div>
 
     <script>
-        // =========================================================================
-        // Cole aqui o link gerado em: Arquivo > Compartilhar > Publicar na Web > CSV
-        // Exemplo: https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?output=csv
-        // =========================================================================
-        const SHEET_URL = "https://docs.google.com/spreadsheets/d/1BX0C2bumsb305vB4IqaMAK6cK2mL4YaUhB6PpxIC9k/export?format=csv";
+        // LINK COPIADO DIRETAMENTE DO SEU PRINT:
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtIwuHc4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv";
 
         let rawDataGlobal = [];
 
@@ -454,11 +445,16 @@
                 const response = await fetch(url);
                 
                 if (!response.ok) {
-                    throw new Error("Não foi possível acessar a planilha. Verifique se ela foi Publicada na Web.");
+                    throw new Error(`Erro de conexão HTTP: ${response.status} (${response.statusText})`);
                 }
 
                 const csvText = await response.text();
                 
+                // Verifica se o Google redirecionou para tela de login corporativo
+                if (csvText.includes('<!DOCTYPE html>') || csvText.includes('accounts.google.com')) {
+                    throw new Error("A planilha está exigindo login corporativo. Desmarque a opção de restringir acesso nas configurações de publicação.");
+                }
+
                 Papa.parse(csvText, {
                     header: true,
                     skipEmptyLines: true,
@@ -477,12 +473,12 @@
                         <h3 style="margin-bottom: 8px;"><i class="fas fa-triangle-exclamation"></i> Falha ao ler a Planilha</h3>
                         <p>${error.message}</p>
                         <hr style="margin: 12px 0; border: none; border-top: 1px solid #fecaca;">
-                        <p><b>Para corrigir em 1 minuto:</b></p>
+                        <p><b>Como liberar em 30 segundos:</b></p>
                         <ol style="margin-left: 20px; margin-top: 6px;">
-                            <li>Abra a sua planilha no Google Drive.</li>
-                            <li>Vá em <b>Arquivo</b> > <b>Compartilhar</b> > <b>Publicar na Web</b>.</li>
-                            <li>Selecione <b>Valores separados por vírgula (.csv)</b> e clique em <b>Publicar</b>.</li>
-                            <li>Copie o link (começa com <code>https://docs.google.com/spreadsheets/d/e/2PACX...</code>) e cole na variável <code>SHEET_URL</code> no código HTML.</li>
+                            <li>Abra a sua planilha e vá em <b>Arquivo > Compartilhar > Publicar na Web</b>.</li>
+                            <li>Clique na setinha <b>▾ Conteúdo publicado e configurações</b>.</li>
+                            <li>Se houver a opção <i>"Exigir que os usuários façam login com a conta de..."</i>, <b>DESMARQUE</b> essa caixinha.</li>
+                            <li>No botão azul <b>Compartilhar</b> (canto superior direito da planilha), confirme se está como <b>Qualquer pessoa com o link pode ler</b>.</li>
                         </ol>
                     </div>
                 `;
