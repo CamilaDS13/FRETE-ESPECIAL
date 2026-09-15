@@ -18,6 +18,7 @@
             --purple: #7c3aed;
             --amber: #d97706;
             --blue-client: #2563eb;
+            --red: #dc2626;
             --text-main: #0f172a;
             --text-dim: #64748b;
             --border: #e2e8f0;
@@ -42,6 +43,8 @@
         .sub-header { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 4px; }
 
         .header-actions { display: flex; align-items: center; gap: 12px; }
+        
+        /* BADGE DE STATUS */
         .badge {
             background: var(--card-bg);
             padding: 8px 16px;
@@ -53,8 +56,10 @@
             gap: 8px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
+            color: var(--text-main);
         }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--green); box-shadow: 0 0 8px var(--green); }
+        .loading-dot { background-color: var(--amber); box-shadow: 0 0 8px var(--amber); animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         .btn-export {
@@ -91,9 +96,7 @@
         }
 
         @media (min-width: 1200px) {
-            .summary-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
+            .summary-grid { grid-template-columns: repeat(5, 1fr); }
         }
 
         .summary-box {
@@ -359,7 +362,10 @@
                 <h1>Campanha de Frete</h1>
             </div>
             <div class="header-actions">
-                <div class="badge"><span class="dot"></span> Online</div>
+                <div id="status-badge" class="badge">
+                    <div id="status-dot" class="dot loading-dot"></div> 
+                    <span id="status-text">Sincronizando...</span>
+                </div>
                 <button class="btn-export" onclick="exportarExcel()">
                     <i class="fas fa-file-excel"></i> Exportar
                 </button>
@@ -444,10 +450,13 @@
     </div>
 
     <script>
-        // =========================================================================
-        // COLE O SEU LINK DA PLANILHA ENTRE AS ASPAS ABAIXO:
-        // =========================================================================
-        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtIwuHc4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv";
+        // Lista de variações exatas para encontrar o link sem erro de maiúscula/minúscula
+        const CANDIDATE_URLS = [
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtIWuHC4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtlWuHC4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtIwuHC4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv",
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtlwuHC4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv"
+        ];
 
         let rawDataGlobal = [];
 
@@ -464,43 +473,53 @@
         }
 
         async function carregarDados() {
-            try {
-                const url = SHEET_URL + (SHEET_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro de conexão HTTP: ${response.status} (${response.statusText})`);
-                }
+            let csvText = null;
 
-                const csvText = await response.text();
-                
-                if (csvText.includes('<!DOCTYPE html>') || csvText.includes('accounts.google.com')) {
-                    throw new Error("A planilha está exigindo login corporativo. Desmarque a opção de restringir acesso nas configurações de publicação.");
-                }
-
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        rawDataGlobal = results.data;
-                        renderizar(results.data);
-                    },
-                    error: function(err) {
-                        throw new Error(err.message);
+            for (let url of CANDIDATE_URLS) {
+                try {
+                    const response = await fetch(url + "&t=" + new Date().getTime());
+                    if (response.ok) {
+                        const text = await response.text();
+                        if (!text.includes('<!DOCTYPE html>') && !text.includes('accounts.google.com')) {
+                            csvText = text;
+                            break; // Conectou com sucesso!
+                        }
                     }
-                });
+                } catch (e) {
+                    // Tenta a próxima variação
+                }
+            }
 
-            } catch (error) {
+            if (!csvText) {
+                document.getElementById('status-dot').className = "dot";
+                document.getElementById('status-dot').style.backgroundColor = "var(--red)";
+                document.getElementById('status-dot').style.boxShadow = "0 0 8px var(--red)";
+                document.getElementById('status-text').innerText = "Falha de Leitura";
+                
                 document.getElementById('months-grid').innerHTML = `
                     <div class="alert-box" style="grid-column: 1 / -1;">
-                        <h3 style="margin-bottom: 8px;"><i class="fas fa-triangle-exclamation"></i> Falha ao ler a Planilha</h3>
-                        <p>${error.message}</p>
-                        <hr style="margin: 12px 0; border: none; border-top: 1px solid #fecaca;">
-                        <p><b>Dica para corrigir o erro:</b></p>
-                        <p>Copie o link gerado na caixinha de "Publicar na Web" com <code>Ctrl + C</code> e cole aqui no chat comigo para eu conferir as letras certinhas!</p>
+                        <h3 style="margin-bottom: 8px;"><i class="fas fa-triangle-exclamation"></i> Não foi possível acessar a Planilha</h3>
+                        <p>A publicação do Google retornou erro ou está restrita aos usuários internos da empresa.</p>
+                        <p style="margin-top: 8px;">Por favor, na janela do Google Sheets, clique em <b>▾ Conteúdo publicado e configurações</b> e confirme se a opção <i>"Exigir login"</i> está desmarcada.</p>
                     </div>
                 `;
+                return;
             }
+
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    rawDataGlobal = results.data;
+                    renderizar(results.data);
+
+                    // Atualiza status para Sincronizado
+                    document.getElementById('status-dot').className = "dot";
+                    document.getElementById('status-dot').style.backgroundColor = "var(--green)";
+                    document.getElementById('status-dot').style.boxShadow = "0 0 8px var(--green)";
+                    document.getElementById('status-text').innerText = "Sincronizado";
+                }
+            });
         }
 
         function renderizar(data) {
