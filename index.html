@@ -44,7 +44,6 @@
 
         .header-actions { display: flex; align-items: center; gap: 12px; }
         
-        /* BADGE DE STATUS */
         .badge {
             background: var(--card-bg);
             padding: 8px 16px;
@@ -78,7 +77,7 @@
         }
         .btn-export:hover { opacity: 0.95; transform: translateY(-1px); }
 
-        /* PAINEL CONSOLIDADO COM 5 CARDS */
+        /* PAINEL CONSOLIDADO */
         .consolidated-panel {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -223,10 +222,10 @@
             width: fit-content;
         }
 
-        /* GRID DOS CARDS MENSAIS */
+        /* GRID DOS CARDS MENSAIS (SEMPRE 2 POR LINHA) */
         .months-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            grid-template-columns: repeat(2, 1fr); /* TRAVADO DE 2 EM 2 */
             gap: 25px;
         }
 
@@ -296,28 +295,27 @@
         }
 
         .table-wrap {
-            overflow-x: auto;
             border-radius: 12px;
             border: 1px solid var(--border);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.78rem;
+            font-size: 0.82rem;
             text-align: left;
             white-space: nowrap;
         }
         th {
             background: var(--card-inner);
-            padding: 10px 12px;
+            padding: 12px 14px;
             font-weight: 800;
             color: var(--text-dim);
             text-transform: uppercase;
-            font-size: 0.68rem;
+            font-size: 0.7rem;
             border-bottom: 1px solid var(--border);
         }
         td {
-            padding: 10px 12px;
+            padding: 12px 14px;
             border-bottom: 1px solid var(--border);
             color: var(--text-main);
         }
@@ -327,9 +325,9 @@
             background: #e0f2fe;
             color: var(--primary);
             font-weight: 800;
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 6px;
-            font-size: 0.7rem;
+            font-size: 0.72rem;
         }
 
         .alert-box {
@@ -345,7 +343,7 @@
         @media (max-width: 960px) {
             .summary-grid { grid-template-columns: 1fr 1fr; }
             .panel-footer-row { grid-template-columns: 1fr; }
-            .months-grid { grid-template-columns: 1fr; }
+            .months-grid { grid-template-columns: 1fr; } /* Em telas menores vira 1 coluna */
         }
         @media (max-width: 500px) {
             body { padding: 15px; }
@@ -375,35 +373,26 @@
         <!-- PAINEL GERAL CONSOLIDADO COM 5 CARDS -->
         <div class="consolidated-panel">
             <div class="summary-grid">
-                <!-- 1. Qtd de Compras -->
                 <div class="summary-box">
                     <span class="label"><i class="fas fa-cart-shopping" style="color: var(--primary);"></i> Qtd de Compras</span>
                     <span class="val" id="total-compras-qtd" style="color: var(--primary);">0</span>
                     <span class="sub-val">Volume total de pedidos</span>
                 </div>
-
-                <!-- 2. Valor das Compras -->
                 <div class="summary-box">
                     <span class="label"><i class="fas fa-sack-dollar" style="color: var(--green);"></i> Valor das Compras</span>
                     <span class="val" id="total-compras-val" style="color: var(--green);">R$ 0,00</span>
                     <span class="sub-val">Faturamento gerado</span>
                 </div>
-
-                <!-- 3. Valor Investido -->
                 <div class="summary-box">
                     <span class="label"><i class="fas fa-hand-holding-dollar" style="color: var(--purple);"></i> Valor Investido</span>
                     <span class="val" id="total-invest-val" style="color: var(--purple);">R$ 0,00</span>
                     <span class="sub-val">Subsídio de frete</span>
                 </div>
-
-                <!-- 4. % de Investimento -->
                 <div class="summary-box">
                     <span class="label"><i class="fas fa-percent" style="color: var(--amber);"></i> % de Investimento</span>
                     <span class="val" id="total-invest-perc" style="color: var(--amber);">0,0%</span>
                     <span class="sub-val">Sobre o valor das compras</span>
                 </div>
-
-                <!-- 5. Total Pago pelo Cliente -->
                 <div class="summary-box">
                     <span class="label"><i class="fas fa-truck" style="color: var(--blue-client);"></i> Pago pelo Cliente</span>
                     <span class="val" id="total-cliente-val" style="color: var(--blue-client);">R$ 0,00</span>
@@ -443,14 +432,13 @@
             </div>
         </div>
 
-        <!-- GRID DOS CARDS MENSAIS -->
+        <!-- GRID DOS CARDS MENSAIS (AGORA EM 2 COLUNAS) -->
         <div class="months-grid" id="months-grid">
             <div style="color: var(--text-dim); padding: 20px;">Carregando dados da planilha...</div>
         </div>
     </div>
 
     <script>
-        // Lista de variações exatas para encontrar o link sem erro de maiúscula/minúscula
         const CANDIDATE_URLS = [
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtIWuHC4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv",
             "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcw3xBtlWuHC4OMtRxqM9ELb_ipK0gLgyuR_zvrCpQuTiSJDZ6jWjRohdiED4T-fiEsFcfqnkF-j-a/pub?output=csv",
@@ -482,12 +470,10 @@
                         const text = await response.text();
                         if (!text.includes('<!DOCTYPE html>') && !text.includes('accounts.google.com')) {
                             csvText = text;
-                            break; // Conectou com sucesso!
+                            break;
                         }
                     }
-                } catch (e) {
-                    // Tenta a próxima variação
-                }
+                } catch (e) {}
             }
 
             if (!csvText) {
@@ -495,14 +481,6 @@
                 document.getElementById('status-dot').style.backgroundColor = "var(--red)";
                 document.getElementById('status-dot').style.boxShadow = "0 0 8px var(--red)";
                 document.getElementById('status-text').innerText = "Falha de Leitura";
-                
-                document.getElementById('months-grid').innerHTML = `
-                    <div class="alert-box" style="grid-column: 1 / -1;">
-                        <h3 style="margin-bottom: 8px;"><i class="fas fa-triangle-exclamation"></i> Não foi possível acessar a Planilha</h3>
-                        <p>A publicação do Google retornou erro ou está restrita aos usuários internos da empresa.</p>
-                        <p style="margin-top: 8px;">Por favor, na janela do Google Sheets, clique em <b>▾ Conteúdo publicado e configurações</b> e confirme se a opção <i>"Exigir login"</i> está desmarcada.</p>
-                    </div>
-                `;
                 return;
             }
 
@@ -513,7 +491,6 @@
                     rawDataGlobal = results.data;
                     renderizar(results.data);
 
-                    // Atualiza status para Sincronizado
                     document.getElementById('status-dot').className = "dot";
                     document.getElementById('status-dot').style.backgroundColor = "var(--green)";
                     document.getElementById('status-dot').style.boxShadow = "0 0 8px var(--green)";
@@ -543,6 +520,7 @@
                 const invest = parseNum(row['VALOR DO INVESTIMENTO']);
                 const valorCompras = parseNum(row['VALOR DAS COMPRAS']);
 
+                // Só mostra meses que já tenham dados preenchidos
                 if (qtd === 0 && invest === 0 && valorCompras === 0 && pagoCliente === 0) {
                     return; 
                 }
@@ -588,12 +566,12 @@
             document.getElementById('total-invest-perc').innerText = `${percInvestGeral}%`;
             document.getElementById('total-cliente-val').innerText = gCliente.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
 
-            // Renderiza Cards Mensais
+            // Renderiza Cards Mensais (em grade de 2 em 2)
             const grid = document.getElementById('months-grid');
             const listaMeses = Object.keys(meses);
 
             if (listaMeses.length === 0) {
-                grid.innerHTML = '<div style="color: var(--text-dim); padding: 20px;">Nenhum dado com valores preenchidos na planilha até o momento.</div>';
+                grid.innerHTML = '<div style="color: var(--text-dim); padding: 20px;">Nenhum dado preenchido na planilha até o momento.</div>';
                 return;
             }
 
